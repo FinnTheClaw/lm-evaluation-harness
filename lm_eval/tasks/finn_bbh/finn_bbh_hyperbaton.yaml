@@ -1,0 +1,3 @@
+dataset_name: hyperbaton
+task: finn_bbh_hyperbaton
+include: _finn_bbh_template.yaml

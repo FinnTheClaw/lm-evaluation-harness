@@ -1,0 +1,3 @@
+dataset_name: formal_fallacies
+task: finn_bbh_formal_fallacies
+include: _finn_bbh_template.yaml

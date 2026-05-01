@@ -1,0 +1,3 @@
+dataset_name: salient_translation_error_detection
+task: finn_bbh_salient_translation_error_detection
+include: _finn_bbh_template.yaml

@@ -1,0 +1,3 @@
+dataset_name: disambiguation_qa
+task: finn_bbh_disambiguation_qa
+include: _finn_bbh_template.yaml

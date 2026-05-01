@@ -1,0 +1,3 @@
+dataset_name: causal_judgement
+task: finn_bbh_causal_judgement
+include: _finn_bbh_template.yaml

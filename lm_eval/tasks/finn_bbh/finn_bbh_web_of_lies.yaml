@@ -1,0 +1,3 @@
+dataset_name: web_of_lies
+task: finn_bbh_web_of_lies
+include: _finn_bbh_template.yaml

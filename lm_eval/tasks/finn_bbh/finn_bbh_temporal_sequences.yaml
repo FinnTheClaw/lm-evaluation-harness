@@ -1,0 +1,3 @@
+dataset_name: temporal_sequences
+task: finn_bbh_temporal_sequences
+include: _finn_bbh_template.yaml

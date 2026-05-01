@@ -1,0 +1,3 @@
+dataset_name: movie_recommendation
+task: finn_bbh_movie_recommendation
+include: _finn_bbh_template.yaml

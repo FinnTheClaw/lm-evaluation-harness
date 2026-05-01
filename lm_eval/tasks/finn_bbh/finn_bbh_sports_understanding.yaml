@@ -1,0 +1,3 @@
+dataset_name: sports_understanding
+task: finn_bbh_sports_understanding
+include: _finn_bbh_template.yaml

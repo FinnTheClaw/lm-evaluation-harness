@@ -1,0 +1,30 @@
+group: finn_bbh
+task:
+  - finn_bbh_boolean_expressions
+  - finn_bbh_causal_judgement
+  - finn_bbh_date_understanding
+  - finn_bbh_disambiguation_qa
+  - finn_bbh_formal_fallacies
+  - finn_bbh_geometric_shapes
+  - finn_bbh_hyperbaton
+  - finn_bbh_logical_deduction_five_objects
+  - finn_bbh_logical_deduction_seven_objects
+  - finn_bbh_logical_deduction_three_objects
+  - finn_bbh_movie_recommendation
+  - finn_bbh_navigate
+  - finn_bbh_object_counting
+  - finn_bbh_penguins_in_a_table
+  - finn_bbh_reasoning_about_colored_objects
+  - finn_bbh_ruin_names
+  - finn_bbh_salient_translation_error_detection
+  - finn_bbh_snarks
+  - finn_bbh_sports_understanding
+  - finn_bbh_temporal_sequences
+  - finn_bbh_tracking_shuffled_objects_five_objects
+  - finn_bbh_tracking_shuffled_objects_seven_objects
+  - finn_bbh_tracking_shuffled_objects_three_objects
+  - finn_bbh_web_of_lies
+aggregate_metric_list:
+  - metric: exact_match
+    aggregation: mean
+    weight_by_size: true

@@ -1,0 +1,3 @@
+dataset_name: ruin_names
+task: finn_bbh_ruin_names
+include: _finn_bbh_template.yaml

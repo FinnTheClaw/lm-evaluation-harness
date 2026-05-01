@@ -1,0 +1,3 @@
+dataset_name: boolean_expressions
+task: finn_bbh_boolean_expressions
+include: _finn_bbh_template.yaml

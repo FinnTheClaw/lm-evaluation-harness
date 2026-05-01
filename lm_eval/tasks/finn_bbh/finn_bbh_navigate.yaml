@@ -1,0 +1,3 @@
+dataset_name: navigate
+task: finn_bbh_navigate
+include: _finn_bbh_template.yaml

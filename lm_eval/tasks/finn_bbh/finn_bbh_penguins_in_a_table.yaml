@@ -1,0 +1,3 @@
+dataset_name: penguins_in_a_table
+task: finn_bbh_penguins_in_a_table
+include: _finn_bbh_template.yaml

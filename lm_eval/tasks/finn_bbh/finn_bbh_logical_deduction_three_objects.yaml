@@ -1,0 +1,3 @@
+dataset_name: logical_deduction_three_objects
+task: finn_bbh_logical_deduction_three_objects
+include: _finn_bbh_template.yaml
