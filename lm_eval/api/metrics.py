@@ -214,6 +214,7 @@ def exact_match_hf_evaluate(
     ignore_case=False,
     ignore_punctuation=False,
     ignore_numbers=False,
+    filter_list=None,  # accepted but unused — finn_bbh tasks pass this kwarg
 ):
     if regexes_to_ignore is not None:
         for s in regexes_to_ignore:

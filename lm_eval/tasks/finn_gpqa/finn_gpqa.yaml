@@ -1,0 +1,9 @@
+group: finn_gpqa
+task:
+  - finn_gpqa_diamond
+  - finn_gpqa_main
+  - finn_gpqa_extended
+aggregate_metric_list:
+  - metric: exact_match
+    aggregation: mean
+    weight_by_size: true

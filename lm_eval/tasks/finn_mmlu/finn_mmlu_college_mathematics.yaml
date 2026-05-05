@@ -1,0 +1,4 @@
+dataset_name: "college_mathematics"
+include: "_finn_mmlu_template.yaml"
+task: "finn_mmlu_college_mathematics"
+task_alias: "college mathematics"

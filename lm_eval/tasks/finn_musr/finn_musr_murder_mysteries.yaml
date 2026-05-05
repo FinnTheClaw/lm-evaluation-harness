@@ -1,0 +1,33 @@
+task: finn_musr_murder_mysteries
+dataset_path: TAUR-Lab/MuSR
+output_type: generate_until
+test_split: murder_mysteries
+doc_to_text: !function utils.doc_to_text_finn
+doc_to_target: "{{answer_choice}}"
+generation_kwargs:
+  do_sample: false
+  temperature: 0
+  max_gen_toks: 2048
+  until: []
+filter_list:
+  - name: flexible_extract
+    filter:
+      - function: "regex"
+        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])[\\)\\].,\\s]"
+        group_select: -1
+      - function: take_first
+  - name: last_letter
+    filter:
+      - function: "regex"
+        regex_pattern: "\\b([A-D])\\b"
+        group_select: -1
+      - function: take_first
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+num_fewshot: 0
+metadata:
+  version: 1.0

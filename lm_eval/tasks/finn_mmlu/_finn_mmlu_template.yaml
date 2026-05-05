@@ -1,0 +1,67 @@
+# finn_mmlu — CoT-aware MMLU template
+# Version: 1.3 | 2026-05-04
+#
+# PURPOSE: Replaces lm_eval's mmlu_*_generative tasks which use get_response
+# filter requiring bare A/B/C/D output. That filter ALWAYS scores 0 for any
+# reasoning/thinking model (Qwen3, Kimi, DeepSeek, etc.) because they output
+# reasoning text before or instead of the letter.
+#
+# FIX: Two-stage extraction:
+#   Stage 1 — phrase regex: finds "The best answer is X" / "the answer is X" /
+#             "Answer: X" / "Therefore: X" anywhere in output (handles parentheses,
+#             brackets, trailing punctuation)
+#   Stage 2 — last_letter fallback: finds the last standalone A/B/C/D in output
+#             if stage 1 finds nothing (catches bare-letter models)
+#
+# PROMPT: Explicitly instructs model to conclude with "The best answer is X."
+#         Works for both thinking-on and thinking-off modes.
+#
+# v1.3 changes (2026-05-04):
+#   - Added until stop sequences to prevent cross-question bleed and runaway responses.
+#     Kimi was occasionally producing 9000+ char outputs with no conclusion when the
+#     model lost track of the task. Stop at next question boundary.
+#   - Regex now accepts end-of-string as valid terminator after letter (handles
+#     "The best answer is B" with no trailing punctuation at generation cutoff).
+#   - Both stage 1 and stage 2 use group_select: -1 (last match wins, correct for CoT
+#     outputs where the final answer appears after reasoning).
+#
+# TESTED: Qwen3.6 (thinking-off proxy), Kimi K2.6 (content-fix proxy), 10/10 cases
+
+dataset_path: hails/mmlu_no_train
+test_split: test
+output_type: generate_until
+doc_to_text: "The following is a multiple choice question. Think through it step by step, then conclude your response with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{question.strip()}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\n\nAnswer:"
+doc_to_target: "{{['A','B','C','D'][answer]}}"
+generation_kwargs:
+  do_sample: false
+  temperature: 0
+  max_gen_toks: 2048
+  until:
+    - "\n\nQuestion:"
+    - "\n\nThe following is a multiple choice"
+filter_list:
+  # Stage 1: phrase-based extraction — handles "The best answer is X", "Answer: X", "Therefore: X"
+  # Accepts: trailing punctuation, brackets, parens, or end-of-string after the letter
+  - name: flexible_extract
+    filter:
+      - function: "regex"
+        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])[\\)\\].,\\s$]"
+        group_select: -1
+      - function: take_first
+  # Stage 2: last-letter fallback — grabs the last standalone A/B/C/D in the output
+  # Used when model doesn't use the expected phrase (rare for Kimi with this prompt)
+  - name: last_letter
+    filter:
+      - function: "regex"
+        regex_pattern: "\\b([A-D])\\b"
+        group_select: -1
+      - function: take_first
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+metadata:
+  version: 1.3
+num_fewshot: 5

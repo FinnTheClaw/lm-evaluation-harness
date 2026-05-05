@@ -1,0 +1,42 @@
+# finn_truthfulqa — generate_until wrapper for TruthfulQA
+# Uses multiple_choice dataset but generate_until output_type
+# TruthfulQA MC1: correct answer is always index 0, so doc_to_target = "A"
+# v1.1: switched to utils.doc_to_text_finn to avoid Jinja hardcoded 8-letter list crash
+#        (some questions have 9+ choices → jinja IndexError on ['A'...'H'][i])
+task: finn_truthfulqa
+dataset_path: truthfulqa/truthful_qa
+dataset_name: multiple_choice
+output_type: generate_until
+training_split: null
+validation_split: validation
+test_split: null
+num_fewshot: 0
+doc_to_text: !function utils.doc_to_text_finn
+doc_to_target: "A"
+generation_kwargs:
+  do_sample: false
+  temperature: 0
+  max_gen_toks: 512
+  until: []
+filter_list:
+  - name: flexible_extract
+    filter:
+      - function: "regex"
+        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-Z])[\\)\\].,\\s]"
+        group_select: -1
+      - function: take_first
+  - name: last_letter
+    filter:
+      - function: "regex"
+        regex_pattern: "\\b([A-Z])\\b"
+        group_select: -1
+      - function: take_first
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+metadata:
+  version: 1.1
+  changelog: "v1.1 - Replaced hardcoded 8-letter Jinja list with utils.doc_to_text_finn; supports any number of choices"

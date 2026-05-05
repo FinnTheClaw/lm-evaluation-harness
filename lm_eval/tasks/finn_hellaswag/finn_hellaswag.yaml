@@ -1,0 +1,39 @@
+# finn_hellaswag — generate_until wrapper for HellaSwag
+# Uses process_docs from hellaswag utils to build query+choices, then generate_until
+task: finn_hellaswag
+dataset_path: Rowan/hellaswag
+dataset_name: null
+output_type: generate_until
+training_split: train
+validation_split: validation
+test_split: null
+process_docs: !function utils.process_docs
+doc_to_text: "The following is a sentence completion question. Choose the most plausible continuation. Think through it, then conclude with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\n{{query}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\nAnswer:"
+doc_to_target: "{{['A','B','C','D'][label|int]}}"
+generation_kwargs:
+  do_sample: false
+  temperature: 0
+  max_gen_toks: 512
+  until: []
+filter_list:
+  - name: flexible_extract
+    filter:
+      - function: "regex"
+        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])[\\)\\].,\\s]"
+        group_select: -1
+      - function: take_first
+  - name: last_letter
+    filter:
+      - function: "regex"
+        regex_pattern: "\\b([A-D])\\b"
+        group_select: -1
+      - function: take_first
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+num_fewshot: 0
+metadata:
+  version: 1.0

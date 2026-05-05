@@ -1,6 +1,9 @@
 dataset_path: SaylorTwift/bbh
 output_type: generate_until
 test_split: test
+# IMPORTANT: do NOT change doc_to_text, target_delimiter, or generation_kwargs without
+# clearing lm-eval-cache first — prompt hash changes invalidate all 2400 cached responses.
+# The kimi_bbh filter handles extraction from bare outputs; prompt format change is not needed.
 doc_to_text: "Q: {{input}}\nA: Let's think step by step."
 doc_to_target: "{{target}}"
 target_delimiter: ""
@@ -20,11 +23,10 @@ generation_kwargs:
 filter_list:
   - name: "get-answer"
     filter:
-      - function: "regex"
-        regex_pattern: "(?<=the answer is )(.*)(?=.)"
-      - function: "take_first"
+      - function: "kimi_bbh"
 num_fewshot: 3
 fewshot_config:
   sampler: first_n
 metadata:
   version: 1.0
+  changelog: "v1.0 original — kimi_bbh filter added 2026-05-04 (replaces broken regex)"
