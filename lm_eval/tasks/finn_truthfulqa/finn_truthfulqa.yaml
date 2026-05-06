@@ -17,12 +17,14 @@ generation_kwargs:
   do_sample: false
   temperature: 0
   max_gen_toks: 4096
-  until: []
+  until:
+    - "\n\nQuestion:"
+    - "\n\nThe following"
 filter_list:
   - name: flexible_extract
     filter:
       - function: "regex"
-        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-Z])[\\)\\].,\\s]"
+        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-Z])(?:[\\)\\].,\\s]|$)"
         group_select: -1
       - function: take_first
   - name: last_letter

@@ -12,7 +12,9 @@ generation_kwargs:
   do_sample: false
   temperature: 0
   max_gen_toks: 4096
-  until: []
+  until:
+    - "\n\nQuestion:"
+    - "\n\nThe following"
 filter_list:
   - name: flexible_extract
     filter:
