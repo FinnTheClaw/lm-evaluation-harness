@@ -16,13 +16,13 @@ filter_list:
   - name: flexible_extract
     filter:
       - function: "regex"
-        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
+        regex_pattern: "(?:best answer is|answer is|the answer is|therefore[:\\s]+|thus[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
         group_select: -1
-      - function: take_first
-  - name: last_letter
-    filter:
       - function: "regex"
-        regex_pattern: "\\b([A-D])\\b"
+        regex_pattern: "\\*\\*([A-D])\\*\\*|^([A-D])[.):,\\s]|\\(([A-D])\\)\\s*$"
+        group_select: -1
+      - function: "regex"
+        regex_pattern: "([A-D])(?:\\)|\\.|,|\\s|$)(?=[^A-D]*$)"
         group_select: -1
       - function: take_first
 metric_list:

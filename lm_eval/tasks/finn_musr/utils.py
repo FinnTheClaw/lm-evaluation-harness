@@ -47,7 +47,7 @@ def doc_to_text_finn(doc):
         f"{choices_str}\n"
         f"Think through the problem carefully. "
         f"You MUST end your response with exactly: 'The best answer is X.' "
-        f"where X is one of {valid_letters}.\nAnswer:"
+        f"where X is one of {valid_letters}.\n\nThe best answer is"
     )
     return text
 

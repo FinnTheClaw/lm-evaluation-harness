@@ -30,7 +30,7 @@
 dataset_path: hails/mmlu_no_train
 test_split: test
 output_type: generate_until
-doc_to_text: "The following is a multiple choice question. Think through it step by step, then conclude your response with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{question.strip()}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\n\nAnswer:"
+doc_to_text: "The following is a multiple choice question. Think through it step by step, then conclude your response with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{question.strip()}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\n\nThe best answer is"
 doc_to_target: "{{['A','B','C','D'][answer]}}"
 generation_kwargs:
   do_sample: false
@@ -40,20 +40,16 @@ generation_kwargs:
     - "\n\nQuestion:"
     - "\n\nThe following is a multiple choice"
 filter_list:
-  # Stage 1: phrase-based extraction — handles "The best answer is X", "Answer: X", "Therefore: X"
-  # Accepts: trailing punctuation, brackets, parens, or end-of-string after the letter
   - name: flexible_extract
     filter:
       - function: "regex"
-        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
+        regex_pattern: "(?:best answer is|answer is|the answer is|therefore[:\\s]+|thus[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
         group_select: -1
-      - function: take_first
-  # Stage 2: last-letter fallback — grabs the last standalone A/B/C/D in the output
-  # Used when model doesn't use the expected phrase (rare for Kimi with this prompt)
-  - name: last_letter
-    filter:
       - function: "regex"
-        regex_pattern: "\\b([A-D])\\b"
+        regex_pattern: "\\*\\*([A-D])\\*\\*|^([A-D])[.):,\\s]|\\(([A-D])\\)\\s*$"
+        group_select: -1
+      - function: "regex"
+        regex_pattern: "([A-D])(?:\\)|\\.|,|\\s|$)(?=[^A-D]*$)"
         group_select: -1
       - function: take_first
 metric_list:

@@ -26,5 +26,5 @@ def doc_to_text_finn(doc):
     )
     for i in range(n):
         text += f"{letters[i]}. {doc['options'][i]}\n"
-    text += "Answer:"
+    text += "\nThe best answer is"
     return text

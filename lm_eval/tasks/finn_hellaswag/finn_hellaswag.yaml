@@ -8,7 +8,7 @@ training_split: train
 validation_split: validation
 test_split: null
 process_docs: !function utils.process_docs
-doc_to_text: "The following is a sentence completion question. Choose the most plausible continuation. Think through it, then conclude with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\n{{query}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\nAnswer:"
+doc_to_text: "The following is a sentence completion question. Choose the most plausible continuation. Think through it, then conclude with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\n{{query}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\n\nThe best answer is"
 doc_to_target: "{{['A','B','C','D'][label|int]}}"
 generation_kwargs:
   do_sample: false
@@ -22,13 +22,13 @@ filter_list:
   - name: flexible_extract
     filter:
       - function: "regex"
-        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
+        regex_pattern: "(?:best answer is|answer is|the answer is|therefore[:\\s]+|thus[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
         group_select: -1
-      - function: take_first
-  - name: last_letter
-    filter:
       - function: "regex"
-        regex_pattern: "\\b([A-D])\\b"
+        regex_pattern: "\\*\\*([A-D])\\*\\*|^([A-D])[.):,\\s]|\\(([A-D])\\)\\s*$"
+        group_select: -1
+      - function: "regex"
+        regex_pattern: "([A-D])(?:\\)|\\.|,|\\s|$)(?=[^A-D]*$)"
         group_select: -1
       - function: take_first
 metric_list:
