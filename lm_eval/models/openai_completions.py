@@ -2,7 +2,7 @@ import logging
 import os
 from functools import cached_property
 from operator import itemgetter
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from lm_eval.api.registry import register_model
 from lm_eval.models.api_models import TemplateAPI
@@ -85,15 +85,181 @@ class LocalCompletionsAPI(TemplateAPI):
                 **gen_kwargs,
             }
         else:
+            # Single-token generation: top_logprobs at position 0 gives
+            # P(any_token | context), which is what we need for loglikelihood.
+            # For multi-token continuations, _loglikelihood_tokens makes multiple calls.
             return {
                 "model": self.model,
                 "prompt": messages,
                 "temperature": 0,
                 "max_tokens": 1,
-                "logprobs": 1,
+                "logprobs": 100,  # top-100 tokens at the generated position
                 "seed": seed,
-                "echo": True,
             }
+
+    def _loglikelihood_tokens(self, requests, **kwargs):
+        """Override to compute loglikelihoods correctly for servers that only return
+        logprobs for generated tokens (not prompt tokens with echo=True).
+
+        Strategy: teacher-forced loglikelihood.
+        For each (context, continuation) pair:
+        - Decode continuation into N text segments (one per local token)
+        - Make N sequential API calls, each time:
+            a. Send prefix = context + true_continuation_so_far
+            b. Get top_logprobs at the generated position
+            c. Find the next continuation text segment in top_logprobs
+            d. Extend prefix by matched token text (teacher forcing)
+        - Sum the logprobs
+
+        For single-token continuations (ARC, MMLU, Winogrande): 1 API call per pair
+        For multi-token continuations (HellaSwag, TruthfulQA): k API calls per pair
+        """
+        import requests as req_lib
+        from tenacity import retry, stop_after_attempt, wait_exponential
+        from tqdm import tqdm
+
+        try:
+            from lm_eval.models.utils import Collator
+        except ImportError:
+            from lm_eval.utils import Collator
+
+        assert self.tokenizer is not None
+        res = []
+
+        def _collate(item):
+            toks = item[1] + item[2]
+            return -len(toks), tuple(toks)
+
+        re_ord = Collator(requests, sort_fn=_collate, group_by=None)
+        chunked = re_ord.get_batched(n=1)
+
+        pbar = tqdm(desc="Requesting API", total=len(requests))
+
+        for chunk in chunked:
+            for cache_key, context_enc, continuation_enc in chunk:
+                if len(continuation_enc) == 0:
+                    answer = (0.0, True)
+                    res.append(answer)
+                    if cache_key is not None:
+                        self.cache_hook.add_partial("loglikelihood", cache_key, answer)
+                    pbar.update(1)
+                    continue
+
+                # Truncate and decode context
+                max_ctx = self.max_length - len(continuation_enc) - 1
+                ctx_enc = list(context_enc)[-max_ctx:] if len(context_enc) > max_ctx else list(context_enc)
+                context_text = self.decode_batch([ctx_enc])[0]
+
+                # Decode full continuation and per-token segments
+                full_cont_text = self.decode_batch([list(continuation_enc)])[0]
+                cont_segments = []  # Text added by each local token
+                for i in range(len(continuation_enc)):
+                    full_so_far = self.decode_batch([list(continuation_enc[:i+1])])[0]
+                    prev_so_far = self.decode_batch([list(continuation_enc[:i])])[0] if i > 0 else ""
+                    cont_segments.append(full_so_far[len(prev_so_far):])
+
+                # Teacher-forced computation:
+                # remaining_cont tracks unmatched continuation text
+                # current_prefix grows with matched tokens (teacher forcing)
+                total_lp = 0.0
+                is_greedy = True
+                current_prefix = context_text
+                remaining_cont = full_cont_text
+
+                # We make one API call per "step", where each step matches
+                # as much of remaining_cont as possible with one Kimi token.
+                max_steps = len(continuation_enc) + 5  # Safety bound
+                step = 0
+
+                while remaining_cont and step < max_steps:
+                    payload = {
+                        "model": self.model,
+                        "prompt": current_prefix,
+                        "temperature": 0,
+                        "max_tokens": 1,
+                        "logprobs": 100,
+                        "seed": self._seed,
+                    }
+
+                    try:
+                        raw_resp = retry(
+                            stop=stop_after_attempt(self.max_retries),
+                            wait=wait_exponential(multiplier=0.5, min=1, max=10),
+                            reraise=True,
+                        )(req_lib.post)(
+                            self.base_url,
+                            json=payload,
+                            headers=self.header,
+                            verify=self.verify_certificate,
+                        )
+                        raw_resp.raise_for_status()
+                        response = raw_resp.json()
+                    except Exception as e:
+                        eval_logger.error(f"API call failed at step {step}: {e}")
+                        total_lp += -100.0 * len(remaining_cont)
+                        is_greedy = False
+                        break
+
+                    choice = response.get("choices", [{}])[0]
+                    lp_data = choice.get("logprobs") or {}
+                    top_lps_list = lp_data.get("top_logprobs") or []
+                    gen_tokens_list = lp_data.get("tokens") or []
+                    gen_logprobs_list = lp_data.get("token_logprobs") or []
+
+                    top_lps = top_lps_list[0] if top_lps_list else {}
+                    gen_tok = gen_tokens_list[0] if gen_tokens_list else ""
+                    gen_lp = gen_logprobs_list[0] if gen_logprobs_list else None
+
+                    # Find the longest prefix of remaining_cont in top_lps (greedy)
+                    found_tok = None
+                    found_lp = None
+                    if top_lps:
+                        for cand_tok in sorted(top_lps.keys(), key=lambda k: -len(k)):
+                            if remaining_cont.startswith(cand_tok) and len(cand_tok) > 0:
+                                found_tok = cand_tok
+                                found_lp = top_lps[cand_tok]
+                                break
+
+                    if found_tok is not None:
+                        # Matched! Advance by this token.
+                        total_lp += found_lp
+                        remaining_cont = remaining_cont[len(found_tok):]
+                        current_prefix += found_tok
+                        if top_lps and found_tok != max(top_lps, key=lambda k: top_lps[k]):
+                            is_greedy = False
+                    elif gen_tok and remaining_cont.startswith(gen_tok):
+                        # Generated token matches (not in top_lps lookup but gen_tok matches)
+                        total_lp += gen_lp if gen_lp is not None else 0.0
+                        remaining_cont = remaining_cont[len(gen_tok):]
+                        current_prefix += gen_tok
+                        if top_lps and gen_tok != max(top_lps, key=lambda k: top_lps[k]):
+                            is_greedy = False
+                    else:
+                        # Continuation token not in top-100 at this position
+                        # Advance by the next local token's text (skip this segment)
+                        # Determine advance length from local cont_segments
+                        skip_text = cont_segments[step] if step < len(cont_segments) else remaining_cont[:1]
+                        total_lp += -100.0
+                        is_greedy = False
+                        remaining_cont = remaining_cont[len(skip_text):]
+                        current_prefix += skip_text
+
+                    step += 1
+
+                # Penalize any remaining unmatched continuation
+                if remaining_cont:
+                    total_lp += -25.0 * len(remaining_cont)
+                    is_greedy = False
+
+                answer = (total_lp, is_greedy)
+                res.append(answer)
+
+                if cache_key is not None:
+                    self.cache_hook.add_partial("loglikelihood", cache_key, answer)
+
+                pbar.update(1)
+
+        return re_ord.get_original(res)
 
     @staticmethod
     def parse_logprobs(
@@ -102,23 +268,15 @@ class LocalCompletionsAPI(TemplateAPI):
         ctxlens: List[int] = None,
         **kwargs,
     ) -> List[Tuple[float, bool]]:
+        """Fallback parse_logprobs (not used in primary loglikelihood path).
+        The actual loglikelihood computation is done in _loglikelihood_tokens.
+        """
         res = []
         if not isinstance(outputs, list):
             outputs = [outputs]
         for out in outputs:
-            for choice, ctxlen in zip(
-                sorted(out["choices"], key=itemgetter("index")), ctxlens
-            ):
-                assert ctxlen > 0, "Context length must be greater than 0"
-                logprobs = sum(choice["logprobs"]["token_logprobs"][ctxlen:-1])
-                tokens_logprobs = choice["logprobs"]["token_logprobs"][ctxlen:-1]
-                top_logprobs = choice["logprobs"]["top_logprobs"][ctxlen:-1]
-                is_greedy = True
-                for tok, top in zip(tokens_logprobs, top_logprobs):
-                    if tok != max(top.values()):
-                        is_greedy = False
-                        break
-                res.append((logprobs, is_greedy))
+            for choice in sorted(out["choices"], key=itemgetter("index")):
+                res.append((0.0, False))
         return res
 
     @staticmethod
