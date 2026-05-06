@@ -14,7 +14,7 @@ metric_list:
     filter_list:
       - name: "get-answer"
 generation_kwargs:
-  max_gen_toks: 1024
+  max_gen_toks: 4096
   until:
     - "Q:"
     - "\n\nQ"

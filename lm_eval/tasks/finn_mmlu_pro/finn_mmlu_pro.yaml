@@ -11,13 +11,13 @@ doc_to_target: "{{answer}}"
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 1024
+  max_gen_toks: 4096
   until: []
 filter_list:
   - name: flexible_extract
     filter:
       - function: "regex"
-        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-J])[\\)\\].,\\s]"
+        regex_pattern: "(?:best answer is|the answer is|answer is|therefore[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-J])(?:[\\)\\].,\\s]|$)"
         group_select: -1
       - function: take_first
   - name: last_letter

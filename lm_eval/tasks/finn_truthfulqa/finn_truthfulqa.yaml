@@ -16,7 +16,7 @@ doc_to_target: "A"
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 512
+  max_gen_toks: 4096
   until: []
 filter_list:
   - name: flexible_extract

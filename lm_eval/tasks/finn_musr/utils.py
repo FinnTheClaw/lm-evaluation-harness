@@ -35,6 +35,8 @@ def doc_to_text_finn(doc):
     Appends instruction to conclude with 'The best answer is X.'
     """
     choices_list = ast.literal_eval(doc["choices"])
+    n = len(choices_list)
+    valid_letters = ", ".join(LETTERS[:n])
     choices_str = ""
     for i, choice in enumerate(choices_list):
         choices_str += f"{LETTERS[i]}. {choice}\n"
@@ -43,7 +45,24 @@ def doc_to_text_finn(doc):
         f"{doc['narrative']}\n\n"
         f"{doc['question']}\n\n"
         f"{choices_str}\n"
-        "Think through the problem carefully, then conclude with exactly: "
-        "'The best answer is X.' where X is A, B, C, or D.\nAnswer:"
+        f"Think through the problem carefully. "
+        f"You MUST end your response with exactly: 'The best answer is X.' "
+        f"where X is one of {valid_letters}.\nAnswer:"
     )
     return text
+
+
+def doc_to_target_finn(doc):
+    """
+    Return the letter (A/B/C...) corresponding to the correct answer,
+    matching what doc_to_text_finn asks the model to output.
+    """
+    choices_list = ast.literal_eval(doc["choices"])
+    answer_choice = doc.get("answer_choice", doc.get("target", ""))
+    try:
+        idx = choices_list.index(answer_choice)
+        return LETTERS[idx]
+    except (ValueError, IndexError):
+        # fallback: use answer_index if available
+        idx = doc.get("answer_index", 0)
+        return LETTERS[idx]

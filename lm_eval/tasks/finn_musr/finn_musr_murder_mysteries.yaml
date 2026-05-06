@@ -3,11 +3,11 @@ dataset_path: TAUR-Lab/MuSR
 output_type: generate_until
 test_split: murder_mysteries
 doc_to_text: !function utils.doc_to_text_finn
-doc_to_target: "{{answer_choice}}"
+doc_to_target: !function utils.doc_to_target_finn
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 2048
+  max_gen_toks: 4096
   until: []
 filter_list:
   - name: flexible_extract

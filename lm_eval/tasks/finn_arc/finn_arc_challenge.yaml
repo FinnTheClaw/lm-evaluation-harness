@@ -13,7 +13,7 @@ doc_to_target: "{{answerKey}}"
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 1024
+  max_gen_toks: 4096
   until: []
 filter_list:
   - name: flexible_extract
