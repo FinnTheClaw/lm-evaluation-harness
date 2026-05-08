@@ -7,22 +7,19 @@ doc_to_target: !function utils.doc_to_target_finn
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 4096
-  until:
-    - "\n\nQuestion:"
-    - "\n\nThe following"
-    - "\n\nWhat is"
+  max_gen_toks: 16384
+  until: []
 filter_list:
   - name: flexible_extract
     filter:
       - function: "regex"
         regex_pattern: "(?:best answer is|answer is|the answer is|therefore[:\\s]+|thus[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
         group_select: -1
+      - function: take_first
+  - name: last_letter
+    filter:
       - function: "regex"
-        regex_pattern: "\\*\\*([A-D])\\*\\*|^([A-D])[.):,\\s]|\\(([A-D])\\)\\s*$"
-        group_select: -1
-      - function: "regex"
-        regex_pattern: "([A-D])(?:\\)|\\.|,|\\s|$)(?=[^A-D]*$)"
+        regex_pattern: "([A-D])(?:[\\)\\].,\\s]|$)"
         group_select: -1
       - function: take_first
 metric_list:
@@ -33,4 +30,4 @@ metric_list:
     ignore_punctuation: true
 num_fewshot: 0
 metadata:
-  version: 1.0
+  version: 2.0
