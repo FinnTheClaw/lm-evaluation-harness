@@ -22,13 +22,7 @@ filter_list:
   - name: flexible_extract
     filter:
       - function: "regex"
-        regex_pattern: "(?:best answer is|answer is|the answer is|therefore[:\\s]+|thus[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
-        group_select: -1
-      - function: "regex"
-        regex_pattern: "\\*\\*([A-D])\\*\\*|^([A-D])[.):,\\s]|\\(([A-D])\\)\\s*$"
-        group_select: -1
-      - function: "regex"
-        regex_pattern: "([A-D])(?:\\)|\\.|,|\\s|$)(?=[^A-D]*$)"
+        regex_pattern: "(?i)(?:(?:best answer is|correct answer is|the answer is|answer is|therefore(?:\\s+the\\s+answer\\s+is)?|thus(?:\\s+the\\s+answer\\s+is)?)\\s*[:\\-]?|answer\\s*[:\\-])\\s*[\\(\\[]?([A-D])(?:[\\)\\].,;:\\s]|$)|(?:^|[\\r\\n])\\s*[\\(\\[]?([A-D])(?:[\\)\\].,;:\\s]*$)"
         group_select: -1
       - function: take_first
 metric_list:

@@ -6,12 +6,11 @@
 # reasoning/thinking model (Qwen3, Kimi, DeepSeek, etc.) because they output
 # reasoning text before or instead of the letter.
 #
-# FIX: Two-stage extraction:
-#   Stage 1 — phrase regex: finds "The best answer is X" / "the answer is X" /
-#             "Answer: X" / "Therefore: X" anywhere in output (handles parentheses,
-#             brackets, trailing punctuation)
-#   Stage 2 — last_letter fallback: finds the last standalone A/B/C/D in output
-#             if stage 1 finds nothing (catches bare-letter models)
+# FIX: Single-pass extraction:
+#   Finds "The best answer is X" / "the answer is X" / "Answer: X" /
+#   "Therefore: X" anywhere in output, or a bare final/only A/B/C/D.
+#   Keep this as one regex stage because lm-eval applies filter steps
+#   sequentially; multiple regex steps are not fallbacks.
 #
 # PROMPT: Explicitly instructs model to conclude with "The best answer is X."
 #         Works for both thinking-on and thinking-off modes.
@@ -43,13 +42,7 @@ filter_list:
   - name: flexible_extract
     filter:
       - function: "regex"
-        regex_pattern: "(?:best answer is|answer is|the answer is|therefore[:\\s]+|thus[:\\s]+|answer[:\\s]+)\\s*[\\(\\[]?([A-D])(?:[\\)\\].,\\s]|$)"
-        group_select: -1
-      - function: "regex"
-        regex_pattern: "\\*\\*([A-D])\\*\\*|^([A-D])[.):,\\s]|\\(([A-D])\\)\\s*$"
-        group_select: -1
-      - function: "regex"
-        regex_pattern: "([A-D])(?:\\)|\\.|,|\\s|$)(?=[^A-D]*$)"
+        regex_pattern: "(?i)(?:(?:best answer is|correct answer is|the answer is|answer is|therefore(?:\\s+the\\s+answer\\s+is)?|thus(?:\\s+the\\s+answer\\s+is)?)\\s*[:\\-]?|answer\\s*[:\\-])\\s*[\\(\\[]?([A-D])(?:[\\)\\].,;:\\s]|$)|(?:^|[\\r\\n])\\s*[\\(\\[]?([A-D])(?:[\\)\\].,;:\\s]*$)"
         group_select: -1
       - function: take_first
 metric_list:
