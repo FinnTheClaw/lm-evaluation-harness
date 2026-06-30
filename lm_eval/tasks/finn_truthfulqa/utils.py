@@ -13,7 +13,7 @@ def doc_to_text_finn(doc):
     max_letter = letters[n - 1]
     return (
         "The following is a question with multiple choice answers. "
-        "Choose the most truthful answer. Think through it, then conclude with exactly: "
+        "Choose the most truthful answer and respond with exactly: "
         f"'The best answer is X.' where X is the letter of your choice (A–{max_letter}).\n\n"
         f"Q: {doc['question']}\n{choice_str}\n\nThe best answer is"
     )

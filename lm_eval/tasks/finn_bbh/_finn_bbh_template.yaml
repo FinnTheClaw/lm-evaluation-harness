@@ -4,7 +4,7 @@ test_split: test
 # IMPORTANT: do NOT change doc_to_text, target_delimiter, or generation_kwargs without
 # clearing lm-eval-cache first — prompt hash changes invalidate all 2400 cached responses.
 # The kimi_bbh filter handles extraction from bare outputs; prompt format change is not needed.
-doc_to_text: "Q: {{input}}\nA: Let's think step by step."
+doc_to_text: "Q: {{input}}\nA: Provide the final answer directly."
 doc_to_target: "{{target}}"
 target_delimiter: ""
 metric_list:
@@ -14,7 +14,7 @@ metric_list:
     filter_list:
       - name: "get-answer"
 generation_kwargs:
-  max_gen_toks: 4096
+  max_gen_toks: 1024
   until:
     - "Q:"
     - "\n\nQ"

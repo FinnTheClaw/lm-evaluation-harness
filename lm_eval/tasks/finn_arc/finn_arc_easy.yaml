@@ -6,12 +6,12 @@ output_type: generate_until
 training_split: train
 validation_split: validation
 test_split: test
-doc_to_text: "The following is a multiple choice science question. Think through it step by step, then conclude your response with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{question}}\n{% for i in range(choices.label|length) %}{{choices.label[i]}}. {{choices.text[i]}}\n{% endfor %}\n\nThe best answer is"
+doc_to_text: "The following is a multiple choice science question. Choose the correct option and respond with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{question}}\n{% for i in range(choices.label|length) %}{{choices.label[i]}}. {{choices.text[i]}}\n{% endfor %}\n\nThe best answer is"
 doc_to_target: "{{answerKey}}"
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 4096
+  max_gen_toks: 512
   until:
     - "\n\nQuestion:"
     - "\n\nThe following"

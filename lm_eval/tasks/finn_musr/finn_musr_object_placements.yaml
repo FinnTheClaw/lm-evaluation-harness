@@ -7,7 +7,7 @@ doc_to_target: !function utils.doc_to_target_finn
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 16384
+  max_gen_toks: 2048
   until: []
 filter_list:
   - name: flexible_extract

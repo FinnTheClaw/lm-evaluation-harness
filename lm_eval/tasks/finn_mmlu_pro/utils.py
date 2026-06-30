@@ -16,12 +16,12 @@ def doc_to_choice(doc):
 
 
 def doc_to_text_finn(doc):
-    """generate_until variant with explicit CoT instruction."""
+    """generate_until variant with a direct answer-format instruction."""
     letters = string.ascii_uppercase
     n = len(doc["options"])
     text = (
-        "The following is a multiple choice question. Think through it carefully, "
-        f"then conclude with exactly: 'The best answer is X.' where X is one of {', '.join(letters[:n])}.\n\n"
+        "The following is a multiple choice question. Choose the correct option "
+        f"and respond with exactly: 'The best answer is X.' where X is one of {', '.join(letters[:n])}.\n\n"
         f"{doc['question']}\n"
     )
     for i in range(n):

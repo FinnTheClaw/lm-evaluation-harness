@@ -6,12 +6,12 @@ training_split: train
 validation_split: train
 test_split: null
 process_docs: !function utils.process_docs
-doc_to_text: "What is the correct answer to this question: {{Question}}\n\nThink through it carefully, then conclude with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nChoices:\n(A) {{choice1}}\n(B) {{choice2}}\n(C) {{choice3}}\n(D) {{choice4}}\n\nThe best answer is"
+doc_to_text: "What is the correct answer to this question? Choose the correct option and respond with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{Question}}\n\nChoices:\n(A) {{choice1}}\n(B) {{choice2}}\n(C) {{choice3}}\n(D) {{choice4}}\n\nThe best answer is"
 doc_to_target: "{{answer}}"
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 4096
+  max_gen_toks: 1024
   until:
     - "\n\nQuestion:"
     - "\n\nThe following"

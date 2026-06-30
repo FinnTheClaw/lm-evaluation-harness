@@ -29,12 +29,12 @@
 dataset_path: hails/mmlu_no_train
 test_split: test
 output_type: generate_until
-doc_to_text: "The following is a multiple choice question. Think through it step by step, then conclude your response with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{question.strip()}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\n\nThe best answer is"
+doc_to_text: "The following is a multiple choice question. Choose the correct option and respond with exactly: 'The best answer is X.' where X is A, B, C, or D.\n\nQuestion: {{question.strip()}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\n\nThe best answer is"
 doc_to_target: "{{['A','B','C','D'][answer]}}"
 generation_kwargs:
   do_sample: false
   temperature: 0
-  max_gen_toks: 4096
+  max_gen_toks: 512
   until:
     - "\n\nQuestion:"
     - "\n\nThe following is a multiple choice"
